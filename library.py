@@ -58,6 +58,7 @@ def handle_png(line: str, state: State):
     
     state.out_dim_x = int(parts[1])
     state.out_dim_y = int(parts[2])
+    state.max_out_dim = max(state.out_dim_x, state.out_dim_y)
     state.out_file_name = parts[3]
     state.out_img = Image.new("RGBA", (state.out_dim_x, state.out_dim_y), (0,0,0,0))
 
