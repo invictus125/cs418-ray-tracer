@@ -14,7 +14,32 @@ class Ray:
 
 
 def trace(state: State):
-    return
+    fwd_vec = np.array([0, 0, -1])
+    right_vec = np.array([1, 0, 0])
+    up_vec = np.array([0, 1, 0])
+    eye = np.array([0, 0, 0])
+    for x in range(state.out_dim_x):
+        for y in range(state.out_dim_y):
+            s_for_pixel = _get_s_for_pixel(x, y, state.out_dim_y, state.out_dim_x, state.max_out_dim)
+            ray_for_pixel = _get_ray_for_s(s_for_pixel[0], s_for_pixel[1], fwd_vec, right_vec, up_vec, eye)
+            minimum_dist_sphere = None
+            minimum_t = 0
+            minimum_pt = None
+            for sphere in state.spheres:
+                intersection = _get_sphere_intersection(ray_for_pixel, sphere)
+                if intersection:
+                    if not minimum_dist_sphere or intersection['t'] < minimum_t:
+                        minimum_t = intersection['t']
+                        minimum_dist_sphere = sphere
+                        minimum_pt = intersection['pt']
+
+            if minimum_dist_sphere:
+                _get_lighting_for_pixel(state, minimum_dist_sphere, minimum_pt, x, y)
+
+
+def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: int, y: int):
+    color = (0, 0, 0, 255)
+    state.out_img.im.putpixel((x, y), color)
 
 
 def _get_s_for_pixel(x, y, h, w, max_hw):
@@ -59,4 +84,3 @@ def _get_sphere_intersection(r: Ray, s: Sphere):
         't': t,
         'pt': np.add(t * r.dir, r.origin)
     }
-

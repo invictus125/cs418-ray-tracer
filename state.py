@@ -12,6 +12,7 @@ class Sphere:
 
     def __init__(self):
         self.color = [1, 1, 1]
+        self.center = None
 
     def set_color(self, color: list[float]):
         self.color = color.copy()
