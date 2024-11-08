@@ -1,5 +1,6 @@
-from state import State, Sphere, Sun
+from state import State, Sphere
 import numpy as np
+from math import floor
 
 
 class Ray:
@@ -37,9 +38,54 @@ def trace(state: State):
                 _get_lighting_for_pixel(state, minimum_dist_sphere, minimum_pt, x, y)
 
 
+def _transform_srgb(value: float):
+    if value > 0.0031308:
+        return ((1.055 * value) ** (1/2.4)) - 0.055
+    else:
+        return 12.92 * value
+
+
+def _get_color(color: np.ndarray):
+    print(color)
+    r = _transform_srgb(color[0])
+    g = _transform_srgb(color[1])
+    b = _transform_srgb(color[2])
+
+    return (floor(r * 255), floor(g * 255), floor(b * 255), 255)
+
+
 def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: int, y: int):
-    color = (0, 0, 0, 255)
-    state.out_img.im.putpixel((x, y), color)
+    color = [0, 0, 0]
+    normal = np.subtract(point, sphere.center)
+    normal = normal / np.linalg.norm(normal)
+    for sun in state.suns:
+        sun_location = sun.get_location()
+        raw_sun_direction = np.subtract(point, sun_location)
+        sun_direction = raw_sun_direction / np.linalg.norm(raw_sun_direction)
+
+        # Factor in occlusion
+        occluded = False
+        ray_to_sun = Ray(point, sun_direction)
+        for s in state.spheres:
+            intersection = _get_sphere_intersection(ray_to_sun, s)
+            if intersection and intersection['t'] < np.linalg.norm(raw_sun_direction):
+                occluded = True
+
+        if occluded:
+            continue
+
+        color = np.add(
+            color,
+            np.multiply(
+                sphere.color,
+                np.multiply(
+                    sun.color,
+                    np.dot(normal, sun_direction)
+                )
+            )
+        )
+
+    state.out_img.im.putpixel((x, y), _get_color(color))
 
 
 def _get_s_for_pixel(x, y, h, w, max_hw):

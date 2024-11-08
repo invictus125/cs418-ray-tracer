@@ -7,15 +7,15 @@ class Sphere:
     y: float
     z: float
     r: float
-    color: list[float]
-    center: list[float]
+    color: np.ndarray
+    center: np.ndarray
 
     def __init__(self):
-        self.color = [1, 1, 1]
+        self.color = np.array([1, 1, 1])
         self.center = None
 
     def set_color(self, color: list[float]):
-        self.color = color.copy()
+        self.color = np.array(color)
 
     def get_center(self):
         if self.center is None:
@@ -27,13 +27,21 @@ class Sun:
     x: float
     y: float
     z: float
-    color: list[float]
+    color: np.ndarray
+    location: np.ndarray
 
     def __init__(self):
         self.color = [1, 1, 1]
+        self.location = None
 
     def set_color(self, color: list[float]):
-        self.color = color.copy()
+        self.color = np.ndarray(color)
+
+    def get_location(self):
+        if self.location is None:
+            self.location = np.array([self.x, self.y, self.z])
+
+        return self.location
 
 
 class State:
