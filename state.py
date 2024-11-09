@@ -35,7 +35,7 @@ class Sun:
         self.location = None
 
     def set_color(self, color: list[float]):
-        self.color = np.ndarray(color)
+        self.color = np.array(color)
 
     def get_location(self):
         if self.location is None:

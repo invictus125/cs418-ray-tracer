@@ -46,7 +46,6 @@ def _transform_srgb(value: float):
 
 
 def _get_color(color: np.ndarray):
-    print(color)
     r = _transform_srgb(color[0])
     g = _transform_srgb(color[1])
     b = _transform_srgb(color[2])
@@ -58,32 +57,47 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
     color = [0, 0, 0]
     normal = np.subtract(point, sphere.center)
     normal = normal / np.linalg.norm(normal)
+
+    log = False
+    if x == 55 and y == 45:
+        log = True
+        print(f'intersection point: {point}')
+        print(f'normal: {normal}')
+
+
     for sun in state.suns:
         sun_location = sun.get_location()
-        raw_sun_direction = np.subtract(point, sun_location)
+        raw_sun_direction = np.subtract(sun_location, point)
         sun_direction = raw_sun_direction / np.linalg.norm(raw_sun_direction)
 
-        # Factor in occlusion
-        occluded = False
-        ray_to_sun = Ray(point, sun_direction)
-        for s in state.spheres:
-            intersection = _get_sphere_intersection(ray_to_sun, s)
-            if intersection and intersection['t'] < np.linalg.norm(raw_sun_direction):
-                occluded = True
+        # # Factor in occlusion
+        # occluded = False
+        # ray_to_sun = Ray(point, sun_direction)
+        # for s in state.spheres:
+        #     intersection = _get_sphere_intersection(ray_to_sun, s)
+        #     if intersection and intersection['t'] < np.linalg.norm(raw_sun_direction):
+        #         occluded = True
 
-        if occluded:
-            continue
+        # if occluded:
+        #     print('\n\nOCCLUDED!')
+        #     continue
 
+        lambert = np.dot(normal, sun_direction)
         color = np.add(
             color,
             np.multiply(
                 sphere.color,
                 np.multiply(
                     sun.color,
-                    np.dot(normal, sun_direction)
+                    lambert
                 )
             )
         )
+        
+        if log:
+            print(f'lambert: {lambert}')
+            print(f'sun direction: {sun_direction}')
+            print(f'linear color: {color}')
 
     state.out_img.im.putpixel((x, y), _get_color(color))
 
