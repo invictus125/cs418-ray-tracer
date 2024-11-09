@@ -29,18 +29,16 @@ class Sun:
     z: float
     color: np.ndarray
     location: np.ndarray
+    norm_direction: np.ndarray
 
-    def __init__(self):
-        self.color = [1, 1, 1]
-        self.location = None
-
-    def set_color(self, color: list[float]):
+    def __init__(self, x: float, y: float, z: float, color: list[float]):
         self.color = np.array(color)
+        self.x = x
+        self.y = y
+        self.z = z
+        self.location = np.array([x, y, z])
 
     def get_location(self):
-        if self.location is None:
-            self.location = np.array([self.x, self.y, self.z])
-
         return self.location
 
 
@@ -57,4 +55,4 @@ class State:
     def __init__(self):
         self.spheres = []
         self.suns = []
-        self.color = [1, 1, 1]
+        self.color = np.array([1.0, 1.0, 1.0])

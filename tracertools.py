@@ -35,7 +35,7 @@ def trace(state: State):
                         minimum_pt = intersection['pt']
 
             if minimum_dist_sphere:
-                _get_lighting_for_pixel(state, minimum_dist_sphere, minimum_pt, x, y)
+                _get_lighting_for_pixel(state, minimum_dist_sphere, minimum_pt, eye, x, y)
 
 
 def _transform_srgb(value: float):
@@ -45,21 +45,46 @@ def _transform_srgb(value: float):
         return 12.92 * value
 
 
-def _get_color(color: np.ndarray):
+def _get_color(color: np.ndarray, log: bool):
     r = _transform_srgb(color[0])
     g = _transform_srgb(color[1])
     b = _transform_srgb(color[2])
 
-    return (floor(r * 255), floor(g * 255), floor(b * 255), 255)
+    if r < 0:
+        r = 0
+    elif r > 1:
+        r = 1.0
+
+    if g < 0:
+        g = 0
+    elif g > 1:
+        g = 1.0
+
+    if b < 0:
+        b = 0
+    elif b > 1:
+        b = 1.0
+
+    final_color = (
+        floor(r * 255),
+        floor(g * 255),
+        floor(b * 255),
+        255
+    )
+
+    if log:
+        print(f'final color: {final_color}')
+
+    return final_color
 
 
-def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: int, y: int):
+def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, eye: np.ndarray, x: int, y: int):
     color = [0, 0, 0]
     normal = np.subtract(point, sphere.center)
     normal = normal / np.linalg.norm(normal)
 
     log = False
-    if x == 55 and y == 45:
+    if x == 82 and y == 70:
         log = True
         print(f'intersection point: {point}')
         print(f'normal: {normal}')
@@ -67,19 +92,19 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
 
     for sun in state.suns:
         sun_location = sun.get_location()
-        raw_sun_direction = np.subtract(sun_location, point)
+        raw_sun_direction = np.subtract(sun_location, eye)
         sun_direction = raw_sun_direction / np.linalg.norm(raw_sun_direction)
 
         # # Factor in occlusion
         # occluded = False
-        # ray_to_sun = Ray(point, sun_direction)
+        # sun_dir_from_origin = np.subtract(sun_location, point)
+        # ray_to_sun = Ray(point, sun_dir_from_origin)
         # for s in state.spheres:
         #     intersection = _get_sphere_intersection(ray_to_sun, s)
-        #     if intersection and intersection['t'] < np.linalg.norm(raw_sun_direction):
+        #     if intersection and intersection['t'] < np.linalg.norm(sun_dir_from_origin):
         #         occluded = True
 
         # if occluded:
-        #     print('\n\nOCCLUDED!')
         #     continue
 
         lambert = np.dot(normal, sun_direction)
@@ -96,10 +121,11 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
         
         if log:
             print(f'lambert: {lambert}')
+            print(f'raw sun direction: {raw_sun_direction}')
             print(f'sun direction: {sun_direction}')
             print(f'linear color: {color}')
 
-    state.out_img.im.putpixel((x, y), _get_color(color))
+    state.out_img.im.putpixel((x, y), _get_color(color, log))
 
 
 def _get_s_for_pixel(x, y, h, w, max_hw):

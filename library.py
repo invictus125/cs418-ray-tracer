@@ -1,6 +1,7 @@
 import re
 from PIL import Image
 from state import State, Sphere, Sun
+import numpy as np
 
 
 ###########################
@@ -86,12 +87,7 @@ def handle_sun(line: str, state: State):
     if len(parts) < 4:
         raise ValueError(f'Invalid sun line: {line}\n')
     
-    new_sun = Sun()
-    new_sun.x = float(parts[1])
-    new_sun.y = float(parts[2])
-    new_sun.z = float(parts[3])
-
-    new_sun.set_color(state.color)
+    new_sun = Sun(float(parts[1]), float(parts[2]), float(parts[3]), state.color)
 
     state.suns.append(new_sun)
 
@@ -102,5 +98,5 @@ def handle_color(line: str, state: State):
     if len(parts) < 4:
         raise ValueError(f'Invalid color line: {line}\n')
     
-    state.color = [float(parts[1]), float(parts[2]), float(parts[3])]
+    state.color = np.array([float(parts[1]), float(parts[2]), float(parts[3])])
 
