@@ -83,11 +83,11 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, eye
     normal = np.subtract(point, sphere.center)
     normal = normal / np.linalg.norm(normal)
 
-    log = False
-    if x == 82 and y == 70:
-        log = True
-        print(f'intersection point: {point}')
-        print(f'normal: {normal}')
+    # log = False
+    # if x == 82 and y == 70:
+    #     log = True
+    #     print(f'intersection point: {point}')
+    #     print(f'normal: {normal}')
 
 
     for sun in state.suns:
@@ -95,17 +95,27 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, eye
         raw_sun_direction = np.subtract(sun_location, eye)
         sun_direction = raw_sun_direction / np.linalg.norm(raw_sun_direction)
 
-        # # Factor in occlusion
-        # occluded = False
-        # sun_dir_from_origin = np.subtract(sun_location, point)
-        # ray_to_sun = Ray(point, sun_dir_from_origin)
-        # for s in state.spheres:
-        #     intersection = _get_sphere_intersection(ray_to_sun, s)
-        #     if intersection and intersection['t'] < np.linalg.norm(sun_dir_from_origin):
-        #         occluded = True
+        # Factor in occlusion
+        occluded = False
+        sun_dir_from_origin = np.subtract(sun_location, point)
+        ray_to_sun = Ray(point, sun_dir_from_origin)
+        for s in state.spheres:
+            intersection = _get_sphere_intersection(ray_to_sun, s)
 
-        # if occluded:
-        #     continue
+            if intersection:
+                if intersection['t'] < 1e-10:
+                    # Sphere is occluding itself.
+                    continue
+
+                dist_to_sun = np.linalg.norm(sun_dir_from_origin)
+                if intersection['t'] < dist_to_sun:
+                    print(f'sphere location: {s.get_center()}')
+                    print(f'distance to sun: {dist_to_sun}')
+                    print(f'intersection: {intersection}')
+                    occluded = True
+
+        if occluded:
+            continue
 
         lambert = np.dot(normal, sun_direction)
         color = np.add(
@@ -119,13 +129,13 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, eye
             )
         )
         
-        if log:
-            print(f'lambert: {lambert}')
-            print(f'raw sun direction: {raw_sun_direction}')
-            print(f'sun direction: {sun_direction}')
-            print(f'linear color: {color}')
+        # if log:
+        #     print(f'lambert: {lambert}')
+        #     print(f'raw sun direction: {raw_sun_direction}')
+        #     print(f'sun direction: {sun_direction}')
+        #     print(f'linear color: {color}')
 
-    state.out_img.im.putpixel((x, y), _get_color(color, log))
+    state.out_img.im.putpixel((x, y), _get_color(color, False))
 
 
 def _get_s_for_pixel(x, y, h, w, max_hw):
