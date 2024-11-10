@@ -97,8 +97,8 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, eye
 
         # Factor in occlusion
         occluded = False
-        sun_dir_from_origin = np.subtract(sun_location, point)
-        ray_to_sun = Ray(point, sun_dir_from_origin)
+        # sun_dir_from_origin = np.subtract(sun_location, point)
+        ray_to_sun = Ray(point, sun_direction)
         for s in state.spheres:
             intersection = _get_sphere_intersection(ray_to_sun, s)
 
@@ -107,12 +107,14 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, eye
                     # Sphere is occluding itself.
                     continue
 
-                dist_to_sun = np.linalg.norm(sun_dir_from_origin)
-                if intersection['t'] < dist_to_sun:
-                    print(f'sphere location: {s.get_center()}')
-                    print(f'distance to sun: {dist_to_sun}')
-                    print(f'intersection: {intersection}')
-                    occluded = True
+                # Not needed unless we're using bulb
+                # dist_to_sun = np.linalg.norm(sun_dir_from_origin)
+                # if intersection['t'] < dist_to_sun:
+                #     print(f'sphere location: {s.get_center()}')
+                #     print(f'distance to sun: {dist_to_sun}')
+                #     print(f'intersection: {intersection}')
+                #     occluded = True
+                occluded = True
 
         if occluded:
             continue
