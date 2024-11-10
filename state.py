@@ -51,8 +51,48 @@ class State:
     color: list[float]
     spheres: list[Sphere]
     suns: list[Sun]
+    expose: float
+    forward: np.ndarray
+    up: np.ndarray
+    right: np.ndarray
+    eye: np.ndarray
+
 
     def __init__(self):
         self.spheres = []
         self.suns = []
         self.color = np.array([1.0, 1.0, 1.0])
+        self.expose = None
+        self.forward = np.array([0, 0, -1])
+        self.up = np.array([0, 1, 0])
+        self.eye = np.array([0, 0, 0])
+        self.right = np.array([1, 0, 0])
+
+    def set_forward(self, fwd):
+        self.forward = np.array(fwd)
+        self.right = np.cross(self.forward, self.up)
+        self.right = self.right / np.linalg.norm(self.right)
+        self.up = np.cross(self.right, self.forward)
+        self.up = self.up / np.linalg.norm(self.up)
+    
+    def set_up(self, up):
+        self.up = np.array(up)
+        self.right = np.cross(self.forward, self.up)
+        self.right = self.right / np.linalg.norm(self.right)
+        self.up = np.cross(self.right, self.forward)
+        self.up = self.up / np.linalg.norm(self.up)
+
+    def set_eye(self, eye):
+        self.eye = np.array(eye)
+
+    def log_state(self):
+        print('\n\n')
+        print('CURRENT STATE:\n')
+        print(f'image: {self.out_file_name} w: {self.out_dim_x} h: {self.out_dim_y}')
+        print(f'color: {self.color}')
+        print(f'expose: {self.expose}')
+        print(f'eye location: {self.eye}')
+        print(f'forward vec: {self.forward}')
+        print(f'up vec: {self.up}')
+        print(f'right vec: {self.right}')
+        print('\n\n')

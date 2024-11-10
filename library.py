@@ -14,6 +14,9 @@ SPHERE_LINE = re.compile("^sphere\s")
 SUN_LINE = re.compile("^sun\s")
 COLOR_LINE = re.compile("^color\s")
 EXPOSE_LINE = re.compile("^expose\s")
+FORWARD_LINE = re.compile("^forward\s")
+UP_LINE = re.compile("^up\s")
+EYE_LINE = re.compile("^eye\s")
 
 
 ###########################
@@ -46,6 +49,12 @@ def get_handler(line: str):
         return handle_color
     if EXPOSE_LINE.match(line):
         return handle_expose
+    if FORWARD_LINE.match(line):
+        return handle_forward
+    if UP_LINE.match(line):
+        return handle_up
+    if EYE_LINE.match(line):
+        return handle_eye
     else:
         print(f'Unhandled command: {line}\n')
         return None
@@ -109,3 +118,20 @@ def handle_expose(line: str, state: State):
 
     state.expose = float(parts[1])
 
+
+def handle_forward(line: str, state: State):
+    parts = line.split()
+
+    state.set_forward([float(parts[1]), float(parts[2]), float(parts[3])])
+
+
+def handle_up(line: str, state: State):
+    parts = line.split()
+
+    state.set_up([float(parts[1]), float(parts[2]), float(parts[3])])
+
+
+def handle_eye(line: str, state: State):
+    parts = line.split()
+
+    state.set_eye([float(parts[1]), float(parts[2]), float(parts[3])])

@@ -15,14 +15,17 @@ class Ray:
 
 
 def trace(state: State):
-    fwd_vec = np.array([0, 0, -1])
-    right_vec = np.array([1, 0, 0])
-    up_vec = np.array([0, 1, 0])
-    eye = np.array([0, 0, 0])
     for x in range(state.out_dim_x):
         for y in range(state.out_dim_y):
             s_for_pixel = _get_s_for_pixel(x, y, state.out_dim_y, state.out_dim_x, state.max_out_dim)
-            ray_for_pixel = _get_ray_for_s(s_for_pixel[0], s_for_pixel[1], fwd_vec, right_vec, up_vec, eye)
+            ray_for_pixel = _get_ray_for_s(
+                s_for_pixel[0],
+                s_for_pixel[1],
+                state.forward,
+                state.right,
+                state.up,
+                state.eye
+            )
             minimum_dist_sphere = None
             minimum_t = 0
             minimum_pt = None
@@ -35,7 +38,7 @@ def trace(state: State):
                         minimum_pt = intersection['pt']
 
             if minimum_dist_sphere:
-                _get_lighting_for_pixel(state, minimum_dist_sphere, minimum_pt, eye, x, y)
+                _get_lighting_for_pixel(state, minimum_dist_sphere, minimum_pt, x, y)
 
 
 def _transform_srgb(value: float):
@@ -87,7 +90,7 @@ def _get_color(color: np.ndarray, expose: float, log: bool):
     return final_color
 
 
-def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, eye: np.ndarray, x: int, y: int):
+def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: int, y: int):
     color = [0, 0, 0]
     normal = np.subtract(point, sphere.center)
     normal = normal / np.linalg.norm(normal)
@@ -101,7 +104,7 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, eye
 
     for sun in state.suns:
         sun_location = sun.get_location()
-        raw_sun_direction = np.subtract(sun_location, eye)
+        raw_sun_direction = np.subtract(sun_location, state.eye)
         sun_direction = raw_sun_direction / np.linalg.norm(raw_sun_direction)
 
         # Factor in occlusion

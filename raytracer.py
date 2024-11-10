@@ -17,6 +17,8 @@ with open(sys.argv[1]) as file:
 
     file.close()
 
+master_state.log_state()
+
 trace(master_state)
 
 write_image(master_state)
