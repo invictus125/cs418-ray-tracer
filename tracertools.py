@@ -53,6 +53,11 @@ def _get_color(color: np.ndarray, expose: float, log: bool):
     g = color[1]
     b = color[2]
 
+    if expose:
+        r = 1 - e ** (-expose * r)
+        g = 1 - e ** (-expose * g)
+        b = 1 - e ** (-expose * b)
+
     if r < 0:
         r = 0
     elif r > 1:
@@ -67,11 +72,6 @@ def _get_color(color: np.ndarray, expose: float, log: bool):
         b = 0
     elif b > 1:
         b = 1.0
-
-    if expose:
-        r = 1 - e ** (-expose * r)
-        g = 1 - e ** (-expose * g)
-        b = 1 - e ** (-expose * b)
 
     r = _transform_srgb(r)
     g = _transform_srgb(g)
