@@ -1,6 +1,6 @@
 from state import State, Sphere
 import numpy as np
-from math import floor
+from math import floor, e
 
 
 class Ray:
@@ -45,7 +45,7 @@ def _transform_srgb(value: float):
         return 12.92 * value
 
 
-def _get_color(color: np.ndarray, log: bool):
+def _get_color(color: np.ndarray, expose: float, log: bool):
     r = color[0]
     g = color[1]
     b = color[2]
@@ -64,6 +64,11 @@ def _get_color(color: np.ndarray, log: bool):
         b = 0
     elif b > 1:
         b = 1.0
+
+    if expose:
+        r = 1 - e ** (-expose * r)
+        g = 1 - e ** (-expose * g)
+        b = 1 - e ** (-expose * b)
 
     r = _transform_srgb(r)
     g = _transform_srgb(g)
@@ -141,7 +146,7 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, eye
             print(f'sun direction: {sun_direction}')
             print(f'linear color: {color}')
 
-    state.out_img.im.putpixel((x, y), _get_color(color, log))
+    state.out_img.im.putpixel((x, y), _get_color(color, state.expose, log))
 
 
 def _get_s_for_pixel(x, y, h, w, max_hw):

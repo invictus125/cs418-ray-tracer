@@ -13,6 +13,7 @@ PNG_LINE = re.compile("^png\s")
 SPHERE_LINE = re.compile("^sphere\s")
 SUN_LINE = re.compile("^sun\s")
 COLOR_LINE = re.compile("^color\s")
+EXPOSE_LINE = re.compile("^expose\s")
 
 
 ###########################
@@ -43,6 +44,8 @@ def get_handler(line: str):
         return handle_sun
     if COLOR_LINE.match(line):
         return handle_color
+    if EXPOSE_LINE.match(line):
+        return handle_expose
     else:
         print(f'Unhandled command: {line}\n')
         return None
@@ -99,4 +102,10 @@ def handle_color(line: str, state: State):
         raise ValueError(f'Invalid color line: {line}\n')
     
     state.color = np.array([float(parts[1]), float(parts[2]), float(parts[3])])
+
+
+def handle_expose(line: str, state: State):
+    parts = line.split()
+
+    state.expose = float(parts[1])
 
