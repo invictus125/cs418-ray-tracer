@@ -18,5 +18,6 @@
 
 ### TODO
 
-- Final values for sRGB are still a bit off
+- Final values for sRGB are still a bit off (SOLVED)
 - ray-view case is showing light coming from the opposite side of the spheres that it should be (z-relative) (SOLVED)
+- Shadow-suns shows some color difference still, but none of the others do
