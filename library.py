@@ -1,6 +1,6 @@
 import re
 from PIL import Image
-from state import State, Sphere, Sun
+from state import State, Sphere, LightSource
 import numpy as np
 
 
@@ -17,6 +17,7 @@ EXPOSE_LINE = re.compile("^expose\s")
 FORWARD_LINE = re.compile("^forward\s")
 UP_LINE = re.compile("^up\s")
 EYE_LINE = re.compile("^eye\s")
+BULB_LINE = re.compile("^bulb\s")
 
 
 ###########################
@@ -55,6 +56,8 @@ def get_handler(line: str):
         return handle_up
     if EYE_LINE.match(line):
         return handle_eye
+    if BULB_LINE.match(line):
+        return handle_bulb
     else:
         print(f'Unhandled command: {line}\n')
         return None
@@ -99,9 +102,9 @@ def handle_sun(line: str, state: State):
     if len(parts) < 4:
         raise ValueError(f'Invalid sun line: {line}\n')
     
-    new_sun = Sun(float(parts[1]), float(parts[2]), float(parts[3]), state.color)
+    new_sun = LightSource(float(parts[1]), float(parts[2]), float(parts[3]), state.color, False)
 
-    state.suns.append(new_sun)
+    state.lights.append(new_sun)
 
 
 def handle_color(line: str, state: State):
@@ -135,3 +138,14 @@ def handle_eye(line: str, state: State):
     parts = line.split()
 
     state.set_eye([float(parts[1]), float(parts[2]), float(parts[3])])
+
+
+def handle_bulb(line: str, state: State):
+    parts = line.split()
+
+    if len(parts) < 4:
+        raise ValueError(f'Invalid sun line: {line}\n')
+    
+    new_bulb = LightSource(float(parts[1]), float(parts[2]), float(parts[3]), state.color, True)
+
+    state.lights.append(new_bulb)

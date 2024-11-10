@@ -23,20 +23,22 @@ class Sphere:
 
         return self.center
 
-class Sun:
+class LightSource:
     x: float
     y: float
     z: float
     color: np.ndarray
     location: np.ndarray
     norm_direction: np.ndarray
+    is_bulb: bool
 
-    def __init__(self, x: float, y: float, z: float, color: list[float]):
+    def __init__(self, x: float, y: float, z: float, color: list[float], bulb: bool):
         self.color = np.array(color)
         self.x = x
         self.y = y
         self.z = z
         self.location = np.array([x, y, z])
+        self.is_bulb = True if bulb else False
 
     def get_location(self):
         return self.location
@@ -50,7 +52,7 @@ class State:
     max_out_dim: int
     color: list[float]
     spheres: list[Sphere]
-    suns: list[Sun]
+    lights: list[LightSource]
     expose: float
     forward: np.ndarray
     up: np.ndarray
@@ -60,7 +62,7 @@ class State:
 
     def __init__(self):
         self.spheres = []
-        self.suns = []
+        self.lights = []
         self.color = np.array([1.0, 1.0, 1.0])
         self.expose = None
         self.forward = np.array([0, 0, -1])

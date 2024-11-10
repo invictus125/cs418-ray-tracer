@@ -102,41 +102,47 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
     #     print(f'normal: {normal}')
 
 
-    for sun in state.suns:
-        sun_location = sun.get_location()
-        sun_direction = sun_location / np.linalg.norm(sun_location)
+    for light in state.lights:
+        light_location = light.get_location()
+        light_direction = light_location / np.linalg.norm(light_location)
 
         # Factor in occlusion
         occluded = False
         # sun_dir_from_origin = np.subtract(sun_location, point)
-        ray_to_sun = Ray(point, sun_direction)
+        ray_to_light = Ray(point, light_direction)
         for s in state.spheres:
-            intersection = _get_sphere_intersection(ray_to_sun, s)
+            intersection = _get_sphere_intersection(ray_to_light, s)
 
             if intersection:
                 if intersection['t'] < 1e-10:
                     # Sphere is occluding itself.
                     continue
 
-                # Not needed unless we're using bulb
-                # dist_to_sun = np.linalg.norm(sun_dir_from_origin)
-                # if intersection['t'] < dist_to_sun:
-                #     print(f'sphere location: {s.get_center()}')
-                #     print(f'distance to sun: {dist_to_sun}')
-                #     print(f'intersection: {intersection}')
-                #     occluded = True
-                occluded = True
+                if light.is_bulb:
+                    bulb_dir_from_ray_origin = np.subtract(point, light_location)
+                    dist_to_bulb = np.linalg.norm(bulb_dir_from_ray_origin)
+                    if intersection['t'] < dist_to_bulb:
+                        print(f'sphere location: {s.get_center()}')
+                        print(f'distance to bulb: {dist_to_bulb}')
+                        print(f'intersection: {intersection}')
+                        occluded = True
+                else:
+                    # If we're not handling a bulb then it doesn't matter where the obstruction is.
+                    occluded = True
 
         if occluded:
             continue
 
-        lambert = np.dot(normal, sun_direction)
+        lambert = np.dot(normal, light_direction)
+        if lambert < 0:
+            lambert = 0
+
         color = np.add(
             color,
             np.multiply(
                 sphere.color,
                 np.multiply(
-                    sun.color,
+                    light.color,
                     lambert
                 )
             )
@@ -144,7 +150,7 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
         
         if log:
             print(f'lambert: {lambert}')
-            print(f'sun direction: {sun_direction}')
+            print(f'sun direction: {light_direction}')
             print(f'linear color: {color}')
 
     state.out_img.im.putpixel((x, y), _get_color(color, state.expose, log))
