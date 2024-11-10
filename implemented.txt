@@ -1,2 +1,3 @@
 exposure
 suns
+camera

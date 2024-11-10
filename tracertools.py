@@ -104,8 +104,7 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
 
     for sun in state.suns:
         sun_location = sun.get_location()
-        raw_sun_direction = np.subtract(sun_location, state.eye)
-        sun_direction = raw_sun_direction / np.linalg.norm(raw_sun_direction)
+        sun_direction = sun_location / np.linalg.norm(sun_location)
 
         # Factor in occlusion
         occluded = False
@@ -145,7 +144,6 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
         
         if log:
             print(f'lambert: {lambert}')
-            print(f'raw sun direction: {raw_sun_direction}')
             print(f'sun direction: {sun_direction}')
             print(f'linear color: {color}')
 

@@ -19,4 +19,4 @@
 ### TODO
 
 - Final values for sRGB are still a bit off
-- ray-view case is showing light coming from the opposite side of the spheres that it should be (z-relative)
+- ray-view case is showing light coming from the opposite side of the spheres that it should be (z-relative) (SOLVED)
