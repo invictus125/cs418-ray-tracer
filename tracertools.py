@@ -132,6 +132,9 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
             continue
 
         lambert = np.dot(normal, sun_direction)
+        if lambert < 0:
+            lambert = 0
+
         color = np.add(
             color,
             np.multiply(
