@@ -43,7 +43,7 @@ def trace(state: State):
 
 def _transform_srgb(value: float):
     if value > 0.0031308:
-        return ((1.055 * value) ** (1/2.4)) - 0.055
+        return (1.055 * (value ** (1/2.4))) - 0.055
     else:
         return 12.92 * value
 
@@ -52,6 +52,11 @@ def _get_color(color: np.ndarray, expose: float, log: bool):
     r = color[0]
     g = color[1]
     b = color[2]
+
+    if expose:
+        r = 1 - e ** (-expose * r)
+        g = 1 - e ** (-expose * g)
+        b = 1 - e ** (-expose * b)
 
     if r < 0:
         r = 0
@@ -68,11 +73,6 @@ def _get_color(color: np.ndarray, expose: float, log: bool):
     elif b > 1:
         b = 1.0
 
-    if expose:
-        r = 1 - e ** (-expose * r)
-        g = 1 - e ** (-expose * g)
-        b = 1 - e ** (-expose * b)
-
     r = _transform_srgb(r)
     g = _transform_srgb(g)
     b = _transform_srgb(b)
@@ -85,6 +85,7 @@ def _get_color(color: np.ndarray, expose: float, log: bool):
     )
 
     if log:
+        print(f'initial color: {color}')
         print(f'final color: {final_color}')
 
     return final_color
@@ -96,10 +97,10 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
     normal = normal / np.linalg.norm(normal)
 
     log = False
-    # if x == 55 and y == 45:
-    #     log = True
-    #     print(f'intersection point: {point}')
-    #     print(f'normal: {normal}')
+    if x == 55 and y == 45:
+        log = True
+        print(f'intersection point: {point}')
+        print(f'normal: {normal}')
 
 
     for light in state.lights:
