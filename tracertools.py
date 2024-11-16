@@ -77,9 +77,9 @@ def _get_color(color: np.ndarray, expose: float):
     return final_color
 
 
-def _get_lighting_for_pixel(state: State, obj: Sphere | Plane, point: np.ndarray, x: int, y: int):
+def _get_lighting_for_pixel(state: State, hit_obj: Sphere | Plane, point: np.ndarray, x: int, y: int):
     color = [0, 0, 0]
-    normal = obj.get_normal_at(point)
+    normal = hit_obj.get_normal_at(point)
     normal = normal / np.linalg.norm(normal)
 
     for light in state.lights:
@@ -122,12 +122,13 @@ def _get_lighting_for_pixel(state: State, obj: Sphere | Plane, point: np.ndarray
             lambert = 0
 
         new_color = np.multiply(
-            obj.color,
+            hit_obj.color,
             np.multiply(
                 light.color,
                 lambert
             )
         )
+
         color = np.add(
             color,
             new_color
