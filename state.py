@@ -2,6 +2,17 @@ from PIL import Image
 import numpy as np
 
 
+class Ray:
+    dir: list[float]
+    dir_mag: float
+    origin: list[float]
+
+    def __init__(self, origin, direction):
+        self.origin = np.array(origin)
+        self.dir = np.array(direction) / np.linalg.norm(direction)
+        self.dir_mag = 1.0
+
+
 class Sphere:
     x: float
     y: float
@@ -22,6 +33,40 @@ class Sphere:
             self.center = np.array([self.x, self.y, self.z])
 
         return self.center
+    
+    def get_normal_at(self, point: np.ndarray):
+        return np.subtract(point, self.center)
+    
+    def get_intersection(self, r: Ray):
+        c = self.get_center()
+        diff = np.subtract(c, r.origin)
+        r_sqrd = self.r ** 2
+        inside = ((np.linalg.norm(diff) ** 2) < r_sqrd)
+
+        t_c = np.divide(np.dot(diff, r.dir), r.dir_mag)
+
+        if not inside and t_c < 0:
+            # No intersection
+            return None
+        
+        d_sqrd = np.linalg.norm(np.subtract(np.add(r.origin, np.multiply(t_c, r.dir)), c)) ** 2
+
+        if not inside and r_sqrd < d_sqrd:
+            # No intersection
+            return None
+        
+        t_offs = ((r_sqrd - d_sqrd) ** 0.5) / r.dir_mag
+
+        if inside:
+            t = t_c + t_offs
+        else:
+            t = t_c - t_offs
+
+        return {
+            't': t,
+            'pt': np.add(t * r.dir, r.origin)
+        }
+
 
 class LightSource:
     x: float
@@ -44,6 +89,52 @@ class LightSource:
         return self.location
 
 
+class Plane:
+    a: float
+    b: float
+    c: float
+    d: float
+    normal: np.ndarray
+    point_on_plane: np.ndarray
+    color: float
+
+    def __init__(self, a, b, c, d, color):
+        self.a = a
+        self.b = b
+        self.c = c
+        self.d = d
+        self.color = np.array(color)
+        nml = np.array([a, b, c])
+        nmlnorm = np.linalg.norm(nml)
+        self.normal = nml / nmlnorm
+        self.point_on_plane = (-d * nml) / nmlnorm
+
+    def get_intersection(self, r: Ray):
+        t = np.divide(
+            np.dot(
+                np.subtract(self.point_on_plane, r.origin),
+                self.normal
+            ),
+            np.dot(
+                r.dir,
+                self.normal
+            )
+        )
+
+        if t <= 0:
+            return None
+        
+        pt = np.add(np.multiply(r.dir, t), r.origin)
+        
+        return {
+            't': t,
+            'pt': pt
+        }
+    
+    def get_normal_at(self, _point: np.ndarray):
+        return self.normal
+
+
 class State:
     out_img: Image
     out_file_name: str
@@ -53,6 +144,7 @@ class State:
     color: list[float]
     spheres: list[Sphere]
     lights: list[LightSource]
+    planes: list[Plane]
     expose: float
     forward: np.ndarray
     up: np.ndarray
@@ -62,6 +154,7 @@ class State:
 
     def __init__(self):
         self.spheres = []
+        self.planes = []
         self.lights = []
         self.color = np.array([1.0, 1.0, 1.0])
         self.expose = None
