@@ -106,16 +106,20 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
     for light in state.lights:
         light_location = light.get_location()
 
+        light_intensity_modification = 1.0
+        dist_to_bulb = -1.0
         if light.is_bulb:
-            light_direction = np.subtract(light_location, point)
-            light_direction = light_direction / np.linalg.norm(light_direction)
+            light_ray = np.subtract(light_location, point)
+            dist_to_bulb = np.linalg.norm(light_ray)
+            light_direction = light_ray / dist_to_bulb
+            light_intensity_modification = 1 / (dist_to_bulb ** 2)
         else:
             light_direction = light_location / np.linalg.norm(light_location)
 
         # Factor in occlusion
         occluded = False
-        # sun_dir_from_origin = np.subtract(sun_location, point)
         ray_to_light = Ray(point, light_direction)
+        
         for s in state.spheres:
             intersection = _get_sphere_intersection(ray_to_light, s)
 
@@ -125,12 +129,7 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
                     continue
 
                 if light.is_bulb:
-                    bulb_dir_from_ray_origin = np.subtract(point, light_location)
-                    dist_to_bulb = np.linalg.norm(bulb_dir_from_ray_origin)
                     if intersection['t'] < dist_to_bulb:
-                        print(f'sphere location: {s.get_center()}')
-                        print(f'distance to bulb: {dist_to_bulb}')
-                        print(f'intersection: {intersection}')
                         occluded = True
                 else:
                     # If we're not handling a bulb then it doesn't matter where the obstruction is.
@@ -139,19 +138,20 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
         if occluded:
             continue
 
-        lambert = np.dot(normal, light_direction)
+        lambert = np.dot(normal, light_direction) * light_intensity_modification
         if lambert < 0:
             lambert = 0
 
+        new_color = np.multiply(
+            sphere.color,
+            np.multiply(
+                light.color,
+                lambert
+            )
+        )
         color = np.add(
             color,
-            np.multiply(
-                sphere.color,
-                np.multiply(
-                    light.color,
-                    lambert
-                )
-            )
+            new_color
         )
         
         if log:
@@ -169,7 +169,6 @@ def _get_s_for_pixel(x, y, h, w, max_hw):
 
 
 def _get_ray_for_s(s_x, s_y, fwd_v, right_v, up_v, eye):
-    # direction = fwd_v + s_x * right_v + s_y * up_v
     dir = np.add(np.add(fwd_v, np.multiply(s_x, right_v)), np.multiply(s_y, up_v))
 
     return Ray(eye, dir)
