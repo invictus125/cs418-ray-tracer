@@ -1,5 +1,19 @@
 from PIL import Image
 import numpy as np
+from math import atan2, floor
+
+
+class Intersection:
+    point: np.ndarray
+    distance: float
+    normal: np.ndarray
+    texcoord: np.ndarray
+
+    def __init__(self, pt, t, normal, texcoord):
+        self.point = pt
+        self.distance = t
+        self.normal = normal
+        self.texcoord = texcoord
 
 
 class Ray:
@@ -20,14 +34,23 @@ class Sphere:
     r: float
     color: np.ndarray
     center: np.ndarray
+    texture: Image
+    texture_x_dim: int
+    texture_y_dim: int
 
-    def __init__(self, x, y, z, r, color: np.ndarray):
+    def __init__(self, x, y, z, r, color: np.ndarray, texture):
         self.color = np.array(color).copy()
         self.x = x
         self.y = y
         self.z = z
         self.r = r
         self.center = np.array([self.x, self.y, self.z])
+        self.texture = None
+        if texture is not None:
+            self.texture = texture.load()
+            self.texture_x_dim, self.texture_y_dim = texture.size
+            print(f'tx: {self.texture_x_dim} ty: {self.texture_y_dim}')
+
 
     def get_center(self):
         return self.center
@@ -60,10 +83,32 @@ class Sphere:
         else:
             t = t_c - t_offs
 
-        return {
-            't': t,
-            'pt': np.add(t * r.dir, r.origin)
-        }
+        pt = np.add(t * r.dir, r.origin)
+
+        # Calculate texture coordinate (lat and long)
+        texcoord = None
+        normal = np.subtract(pt, self.center) / self.r
+        if self.texture is not None:
+            texcoord = np.array([
+                floor(
+                    (
+                        atan2(normal[0], normal[2]) + 1.0 / 2.0
+                    ) * self.texture_x_dim
+                ),
+                floor(
+                    (
+                        atan2(
+                            normal[1], (
+                                (normal[0] ** 2)
+                                + (normal[2] ** 2)
+                            ) ** 0.5
+                        ) + 1.0 / 2.0
+                    ) * self.texture_y_dim
+                )
+            ])
+            print(f'Calculated tex coord: {texcoord}')
+
+        return Intersection(pt, t, normal, texcoord)
 
 
 class LightSource:
@@ -118,6 +163,7 @@ class Plane:
     normal: np.ndarray
     point_on_plane: np.ndarray
     color: np.ndarray
+    texture: Image
 
     def __init__(self, a, b, c, d, color):
         self.a = a
@@ -125,13 +171,18 @@ class Plane:
         self.c = c
         self.d = d
         self.color = np.array(color).copy()
+        self.texture = None
         nml = np.array([a, b, c])
         nmlnorm = np.linalg.norm(nml)
         self.normal = nml / nmlnorm
         self.point_on_plane = (-d * nml) / nmlnorm
 
     def get_intersection(self, r: Ray):
-        return _get_plane_intersection(r, self.normal, self.point_on_plane)
+        intersection = _get_plane_intersection(r, self.normal, self.point_on_plane)
+        if intersection is not None:
+            return Intersection(intersection['pt'], intersection['t'], self.normal, None)
+        
+        return None
     
     def get_normal_at(self, _point: np.ndarray):
         return self.normal
@@ -151,12 +202,14 @@ class Triangle:
     normal: np.ndarray
     color: np.ndarray
     bary_vectors: list[np.ndarray]
+    texture: Image
 
     def __init__(self, v1: Vertex, v2: Vertex, v3: Vertex, color: np.ndarray):
         self.v1 = np.array(v1.point).copy()
         self.v2 = np.array(v2.point).copy()
         self.v3 = np.array(v3.point).copy()
         self.color = np.array(color).copy()
+        self.texture = None
         e1 = np.subtract(self.v1, self.v2)
         e2 = np.subtract(self.v2, self.v3)
         e3 = np.subtract(self.v3, self.v1)
@@ -193,12 +246,15 @@ class Triangle:
 
             if np.any(barycentric < 0):
                 return None
+            
+            return Intersection(plane_intersection['pt'], plane_intersection['t'], self.normal, None)
         
-        return plane_intersection
+        return None
 
 
 class State:
     out_img: Image
+    texture: Image
     out_file_name: str
     out_dim_x: int
     out_dim_y: int
@@ -226,6 +282,7 @@ class State:
         self.lights = []
         self.color = np.array([1.0, 1.0, 1.0])
         self.expose = None
+        self.texture = None
         self.forward = np.array([0, 0, -1])
         self.up = np.array([0, 1, 0])
         self.eye = np.array([0, 0, 0])

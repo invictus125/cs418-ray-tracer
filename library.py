@@ -21,6 +21,7 @@ BULB_LINE = re.compile("^bulb\s")
 PLANE_LINE = re.compile("^plane\s")
 XYZ_LINE = re.compile("^xyz\s")
 TRI_LINE = re.compile("^tri\s")
+TEX_LINE = re.compile("^texture\s")
 
 
 ###########################
@@ -67,6 +68,8 @@ def get_handler(line: str):
         return handle_xyz
     if TRI_LINE.match(line):
         return handle_tri
+    if TEX_LINE.match(line):
+        return handle_texture
     else:
         print(f'Unhandled command: {line}\n')
         return None
@@ -88,13 +91,29 @@ def handle_png(line: str, state: State):
     state.out_img = Image.new("RGBA", (state.out_dim_x, state.out_dim_y), (0,0,0,0))
 
 
+def handle_texture(line: str, state: State):
+    parts = line.split()
+
+    if parts[1] == 'none':
+        state.texture = None
+    else:
+        state.texture = Image.open(parts[1])
+
+
 def handle_sphere(line: str, state: State):
     parts = line.split()
 
     if len(parts) < 5:
         raise ValueError(f'Invalid sphere line: {line}\n')
     
-    new_sphere = Sphere(float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]), state.color)
+    new_sphere = Sphere(
+        float(parts[1]),
+        float(parts[2]),
+        float(parts[3]),
+        float(parts[4]),
+        state.color,
+        state.texture
+    )
 
     state.add_sphere(new_sphere)
 

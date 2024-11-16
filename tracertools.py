@@ -1,4 +1,4 @@
-from state import State, Sphere, Plane, Ray
+from state import State, Sphere, Plane, Ray, Intersection
 import numpy as np
 from math import floor, e
 
@@ -17,18 +17,26 @@ def trace(state: State):
             )
             minimum_dist_obj = None
             minimum_t = 0
-            minimum_pt = None
+            minimum_intersection = None
 
             for obj in state.objects:
                 intersection = obj.get_intersection(ray_for_pixel)
                 if intersection:
-                    if not minimum_dist_obj or intersection['t'] < minimum_t:
-                        minimum_t = intersection['t']
+                    if not minimum_dist_obj or intersection.distance < minimum_t:
+                        minimum_t = intersection.distance
                         minimum_dist_obj = obj
-                        minimum_pt = intersection['pt']
+                        minimum_intersection = intersection
 
             if minimum_dist_obj:
-                _get_lighting_for_pixel(state, minimum_dist_obj, minimum_pt, x, y, ray_for_pixel)
+                _get_lighting_for_pixel(
+                    state,
+                    minimum_dist_obj,
+                    minimum_intersection,
+                    x,
+                    y,
+                    ray_for_pixel,
+                    minimum_dist_obj.texture is not None
+                )
 
 
 def _transform_srgb(value: float):
@@ -77,9 +85,17 @@ def _get_color(color: np.ndarray, expose: float):
     return final_color
 
 
-def _get_lighting_for_pixel(state: State, hit_obj: Sphere | Plane, point: np.ndarray, x: int, y: int, ray: Ray):
+def _get_lighting_for_pixel(
+        state: State,
+        hit_obj: Sphere | Plane,
+        intersection: Intersection,
+        x: int,
+        y: int,
+        ray: Ray,
+        with_tex: bool
+):
     color = [0, 0, 0]
-    normal = hit_obj.get_normal_at(point)
+    normal = intersection.normal
     normal = normal / np.linalg.norm(normal)
 
     # If the normal and the ray are in the same direction, reverse the normal
@@ -92,7 +108,7 @@ def _get_lighting_for_pixel(state: State, hit_obj: Sphere | Plane, point: np.nda
         light_intensity_modification = 1.0
         dist_to_bulb = -1.0
         if light.is_bulb:
-            light_ray = np.subtract(light_location, point)
+            light_ray = np.subtract(light_location, intersection.point)
             dist_to_bulb = np.linalg.norm(light_ray)
             light_direction = light_ray / dist_to_bulb
             light_intensity_modification = 1 / (dist_to_bulb ** 2)
@@ -101,18 +117,18 @@ def _get_lighting_for_pixel(state: State, hit_obj: Sphere | Plane, point: np.nda
 
         # Factor in occlusion
         occluded = False
-        ray_to_light = Ray(point, light_direction)
+        ray_to_light = Ray(intersection.point, light_direction)
 
         for obj in state.objects:
-            intersection = obj.get_intersection(ray_to_light)
+            hit = obj.get_intersection(ray_to_light)
 
-            if intersection:
-                if intersection['t'] < 1e-10:
+            if hit:
+                if hit.distance < 1e-10:
                     # Sphere is occluding itself.
                     continue
 
                 if light.is_bulb:
-                    if intersection['t'] < dist_to_bulb:
+                    if hit.distance < dist_to_bulb:
                         occluded = True
                 else:
                     # If we're not handling a bulb then it doesn't matter where the obstruction is.
@@ -125,8 +141,14 @@ def _get_lighting_for_pixel(state: State, hit_obj: Sphere | Plane, point: np.nda
         if lambert < 0:
             lambert = 0
 
+        # Use a texture if there is one loaded
+        obj_color = hit_obj.color
+        if with_tex:
+            color_from_img = hit_obj.texture[intersection.texcoord[0], intersection.texcoord[1]]
+            obj_color = np.array(color_from_img[0:3]) / 255.0
+
         new_color = np.multiply(
-            hit_obj.color,
+            obj_color,
             np.multiply(
                 light.color,
                 lambert
