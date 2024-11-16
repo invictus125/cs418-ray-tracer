@@ -160,11 +160,6 @@ def handle_plane(line: str, state: State):
     if len(parts) < 5:
         raise ValueError(f'Invalid sphere line: {line}\n')
     
-    new_sphere = Sphere()
-    new_sphere.x = float(parts[1])
-    new_sphere.y = float(parts[2])
-    new_sphere.z = float(parts[3])
-    new_sphere.r = float(parts[4])
     new_plane = Plane(float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]), state.color)
 
     state.planes.append(new_plane)

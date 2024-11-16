@@ -96,7 +96,7 @@ class Plane:
     d: float
     normal: np.ndarray
     point_on_plane: np.ndarray
-    color: float
+    color: np.ndarray
 
     def __init__(self, a, b, c, d, color):
         self.a = a

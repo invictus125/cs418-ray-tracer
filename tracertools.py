@@ -39,7 +39,7 @@ def _transform_srgb(value: float):
         return 12.92 * value
 
 
-def _get_color(color: np.ndarray, expose: float, log: bool):
+def _get_color(color: np.ndarray, expose: float):
     r = color[0]
     g = color[1]
     b = color[2]
@@ -75,10 +75,6 @@ def _get_color(color: np.ndarray, expose: float, log: bool):
         255
     )
 
-    if log:
-        print(f'initial color: {color}')
-        print(f'final color: {final_color}')
-
     return final_color
 
 
@@ -86,13 +82,6 @@ def _get_lighting_for_pixel(state: State, obj: Sphere | Plane, point: np.ndarray
     color = [0, 0, 0]
     normal = obj.get_normal_at(point)
     normal = normal / np.linalg.norm(normal)
-
-    log = False
-    if x == 55 and y == 45:
-        log = True
-        print(f'intersection point: {point}')
-        print(f'normal: {normal}')
-
 
     for light in state.lights:
         light_location = light.get_location()
@@ -145,13 +134,8 @@ def _get_lighting_for_pixel(state: State, obj: Sphere | Plane, point: np.ndarray
             color,
             new_color
         )
-        
-        if log:
-            print(f'lambert: {lambert}')
-            print(f'sun direction: {light_direction}')
-            print(f'linear color: {color}')
 
-    state.out_img.im.putpixel((x, y), _get_color(color, state.expose, log))
+    state.out_img.im.putpixel((x, y), _get_color(color, state.expose))
 
 
 def _get_s_for_pixel(x, y, h, w, max_hw):
