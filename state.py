@@ -22,7 +22,7 @@ class Sphere:
     center: np.ndarray
 
     def __init__(self, x, y, z, r, color: np.ndarray):
-        self.color = np.array(color)
+        self.color = np.array(color).copy()
         self.x = x
         self.y = y
         self.z = z
@@ -76,7 +76,7 @@ class LightSource:
     is_bulb: bool
 
     def __init__(self, x: float, y: float, z: float, color: list[float], bulb: bool):
-        self.color = np.array(color)
+        self.color = np.array(color).copy()
         self.x = x
         self.y = y
         self.z = z
@@ -101,7 +101,7 @@ class Plane:
         self.b = b
         self.c = c
         self.d = d
-        self.color = np.array(color)
+        self.color = np.array(color).copy()
         nml = np.array([a, b, c])
         nmlnorm = np.linalg.norm(nml)
         self.normal = nml / nmlnorm
