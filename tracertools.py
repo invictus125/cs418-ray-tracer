@@ -19,8 +19,7 @@ def trace(state: State):
             minimum_t = 0
             minimum_pt = None
 
-            objs = list(state.spheres + state.planes)
-            for obj in objs:
+            for obj in state.objects:
                 intersection = obj.get_intersection(ray_for_pixel)
                 if intersection:
                     if not minimum_dist_obj or intersection['t'] < minimum_t:
@@ -99,9 +98,8 @@ def _get_lighting_for_pixel(state: State, obj: Sphere | Plane, point: np.ndarray
         # Factor in occlusion
         occluded = False
         ray_to_light = Ray(point, light_direction)
-        
-        objs = list(state.spheres + state.planes)
-        for obj in objs:
+
+        for obj in state.objects:
             intersection = obj.get_intersection(ray_to_light)
 
             if intersection:

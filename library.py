@@ -90,7 +90,7 @@ def handle_sphere(line: str, state: State):
     
     new_sphere = Sphere(float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]), state.color)
 
-    state.spheres.append(new_sphere)
+    state.add_sphere(new_sphere)
 
 
 def handle_sun(line: str, state: State):
@@ -156,4 +156,4 @@ def handle_plane(line: str, state: State):
     
     new_plane = Plane(float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]), state.color)
 
-    state.planes.append(new_plane)
+    state.add_plane(new_plane)

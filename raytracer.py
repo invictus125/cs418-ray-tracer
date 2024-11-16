@@ -19,6 +19,9 @@ with open(sys.argv[1]) as file:
 
 master_state.log_state()
 
+print('TRACING...')
 trace(master_state)
+
+master_state.log_state()
 
 write_image(master_state)

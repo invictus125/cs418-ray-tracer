@@ -140,6 +140,7 @@ class State:
     out_dim_y: int
     max_out_dim: int
     color: list[float]
+    objects: list[Sphere | Plane]
     spheres: list[Sphere]
     lights: list[LightSource]
     planes: list[Plane]
@@ -153,6 +154,7 @@ class State:
     def __init__(self):
         self.spheres = []
         self.planes = []
+        self.objects = []
         self.lights = []
         self.color = np.array([1.0, 1.0, 1.0])
         self.expose = None
@@ -178,6 +180,14 @@ class State:
     def set_eye(self, eye):
         self.eye = np.array(eye)
 
+    def add_sphere(self, s: Sphere):
+        self.spheres.append(s)
+        self.objects.append(s)
+
+    def add_plane(self, p: Plane):
+        self.planes.append(p)
+        self.objects.append(p)
+
     def log_state(self):
         print('\n\n')
         print('CURRENT STATE:\n')
@@ -188,4 +198,13 @@ class State:
         print(f'forward vec: {self.forward}')
         print(f'up vec: {self.up}')
         print(f'right vec: {self.right}')
+        print(f'lights:')
+        for light in self.lights:
+            print(f'\tlocation: {light.location}, color: {light.color}, isBulb: {light.is_bulb}')
+        print(f'spheres:')
+        for sphere in self.spheres:
+            print(f'\tcenter: {sphere.center}, radius: {sphere.r}, color: {sphere.color}')
+        print(f'planes:')
+        for plane in self.planes:
+            print(f'\tnormal: {plane.normal}, color: {plane.color}')
         print('\n\n')
