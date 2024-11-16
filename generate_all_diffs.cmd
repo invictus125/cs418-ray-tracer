@@ -9,6 +9,8 @@ make run file=test_input/ray-sphere.txt > sphere_out
 make run file=test_input/ray-sun.txt > sun_out
 make run file=test_input/ray-suns.txt > suns_out
 make run file=test_input/ray-view.txt > view_out
+make run file=test_input/ray-bulb.txt > bulb_out
+make run file=test_input/ray-shadow-bulb.txt > shadow-bulb_out
 
 cd generate_diffs
 
@@ -23,5 +25,7 @@ start cmd.exe /C sphere.cmd
 start cmd.exe /C sun.cmd
 start cmd.exe /C suns.cmd
 start cmd.exe /C view.cmd
+start cmd.exe /C bulb.cmd
+start cmd.exe /C shadow-bulb.cmd
 
 cd ..

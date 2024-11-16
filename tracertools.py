@@ -105,7 +105,12 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
 
     for light in state.lights:
         light_location = light.get_location()
-        light_direction = light_location / np.linalg.norm(light_location)
+
+        if light.is_bulb:
+            light_direction = np.subtract(light_location, point)
+            light_direction = light_direction / np.linalg.norm(light_direction)
+        else:
+            light_direction = light_location / np.linalg.norm(light_location)
 
         # Factor in occlusion
         occluded = False
