@@ -21,17 +21,15 @@ class Sphere:
     color: np.ndarray
     center: np.ndarray
 
-    def __init__(self):
-        self.color = np.array([1, 1, 1])
-        self.center = None
-
-    def set_color(self, color: list[float]):
+    def __init__(self, x, y, z, r, color: np.ndarray):
         self.color = np.array(color)
+        self.x = x
+        self.y = y
+        self.z = z
+        self.r = r
+        self.center = np.array([self.x, self.y, self.z])
 
     def get_center(self):
-        if self.center is None:
-            self.center = np.array([self.x, self.y, self.z])
-
         return self.center
     
     def get_normal_at(self, point: np.ndarray):
