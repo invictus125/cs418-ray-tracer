@@ -13,6 +13,8 @@ make run file=test_input/ray-bulb.txt > bulb_out
 make run file=test_input/ray-shadow-bulb.txt > shadow-bulb_out
 make run file=test_input/ray-plane.txt > plane_out
 make run file=test_input/ray-shadow-plane.txt > shadow-plane_out
+make run file=test_input/ray-tri.txt > tri_out
+make run file=test_input/ray-shadow-triangle.txt > shadow-triangle_out
 
 cd generate_diffs
 
@@ -31,5 +33,7 @@ start cmd.exe /C bulb.cmd
 start cmd.exe /C shadow-bulb.cmd
 start cmd.exe /C plane.cmd
 start cmd.exe /C shadow-plane.cmd
+start cmd.exe /C tri.cmd
+start cmd.exe /C shadow-triangle.cmd
 
 cd ..

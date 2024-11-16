@@ -1,6 +1,6 @@
 import re
 from PIL import Image
-from state import State, Sphere, LightSource, Plane
+from state import State, Sphere, LightSource, Plane, Triangle, Vertex
 import numpy as np
 
 
@@ -19,6 +19,8 @@ UP_LINE = re.compile("^up\s")
 EYE_LINE = re.compile("^eye\s")
 BULB_LINE = re.compile("^bulb\s")
 PLANE_LINE = re.compile("^plane\s")
+XYZ_LINE = re.compile("^xyz\s")
+TRI_LINE = re.compile("^tri\s")
 
 
 ###########################
@@ -61,6 +63,10 @@ def get_handler(line: str):
         return handle_bulb
     if PLANE_LINE.match(line):
         return handle_plane
+    if XYZ_LINE.match(line):
+        return handle_xyz
+    if TRI_LINE.match(line):
+        return handle_tri
     else:
         print(f'Unhandled command: {line}\n')
         return None
@@ -157,3 +163,26 @@ def handle_plane(line: str, state: State):
     new_plane = Plane(float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]), state.color)
 
     state.add_plane(new_plane)
+
+
+def handle_xyz(line: str, state: State):
+    parts = line.split()
+
+    new_v = Vertex(float(parts[1]), float(parts[2]), float(parts[3]))
+
+    state.add_vertex(new_v)
+
+
+def handle_tri(line: str, state: State):
+    parts = line.split()
+
+    i1 = int(parts[1])
+    i2 = int(parts[2])
+    i3 = int(parts[3])
+
+    v1 = state.get_vertex(i1)
+    v2 = state.get_vertex(i2)
+    v3 = state.get_vertex(i3)
+    new_tri = Triangle(v1, v2, v3, state.color)
+
+    state.add_triangle(new_tri)

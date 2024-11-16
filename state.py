@@ -87,6 +87,29 @@ class LightSource:
         return self.location
 
 
+def _get_plane_intersection(r: Ray, normal: np.ndarray, point_on_plane: np.ndarray):
+    t = np.divide(
+        np.dot(
+            np.subtract(point_on_plane, r.origin),
+            normal
+        ),
+        np.dot(
+            r.dir,
+            normal
+        )
+    )
+
+    if t <= 0:
+        return None
+    
+    pt = np.add(np.multiply(r.dir, t), r.origin)
+    
+    return {
+        't': t,
+        'pt': pt
+    }
+
+
 class Plane:
     a: float
     b: float
@@ -108,29 +131,70 @@ class Plane:
         self.point_on_plane = (-d * nml) / nmlnorm
 
     def get_intersection(self, r: Ray):
-        t = np.divide(
-            np.dot(
-                np.subtract(self.point_on_plane, r.origin),
-                self.normal
-            ),
-            np.dot(
-                r.dir,
-                self.normal
-            )
-        )
-
-        if t <= 0:
-            return None
-        
-        pt = np.add(np.multiply(r.dir, t), r.origin)
-        
-        return {
-            't': t,
-            'pt': pt
-        }
+        return _get_plane_intersection(r, self.normal, self.point_on_plane)
     
     def get_normal_at(self, _point: np.ndarray):
         return self.normal
+
+
+class Vertex:
+    point: np.ndarray
+
+    def __init__(self, x: float, y: float, z: float):
+        self.point = np.array([x, y, z])
+
+
+class Triangle:
+    v1: np.ndarray
+    v2: np.ndarray
+    v3: np.ndarray
+    normal: np.ndarray
+    color: np.ndarray
+    bary_vectors: list[np.ndarray]
+
+    def __init__(self, v1: Vertex, v2: Vertex, v3: Vertex, color: np.ndarray):
+        self.v1 = np.array(v1.point).copy()
+        self.v2 = np.array(v2.point).copy()
+        self.v3 = np.array(v3.point).copy()
+        self.color = np.array(color).copy()
+        e1 = np.subtract(self.v1, self.v2)
+        e2 = np.subtract(self.v2, self.v3)
+        e3 = np.subtract(self.v3, self.v1)
+        n = np.cross(e1, e2)
+        self.normal = n / np.linalg.norm(n)
+
+        # Compute internal vectors for barycentrics
+        self.bary_vectors = []
+        b1 = np.cross(e1, self.normal)
+        b1 = b1 / np.linalg.norm(n)
+        b2 = np.cross(e2, self.normal)
+        b2 = b2 / np.linalg.norm(n)
+        b3 = np.cross(e3, self.normal)
+        b3 = b3 / np.linalg.norm(n)
+        self.bary_vectors.append(b1)
+        self.bary_vectors.append(b2)
+        self.bary_vectors.append(b3)
+
+    def get_normal_at(self, _point: np.ndarray):
+        return self.normal
+    
+    def calc_barycentric_coords(self, p: np.ndarray):
+        return np.array([
+            np.dot(np.subtract(p, self.v1), self.bary_vectors[0]),
+            np.dot(np.subtract(p, self.v2), self.bary_vectors[1]),
+            np.dot(np.subtract(p, self.v3), self.bary_vectors[2]),
+        ])
+    
+    def get_intersection(self, r: Ray):
+        plane_intersection = _get_plane_intersection(r, self.normal, self.v1)
+
+        if plane_intersection is not None:
+            barycentric = self.calc_barycentric_coords(plane_intersection['pt'])
+
+            if np.any(barycentric < 0):
+                return None
+        
+        return plane_intersection
 
 
 class State:
@@ -140,10 +204,12 @@ class State:
     out_dim_y: int
     max_out_dim: int
     color: list[float]
-    objects: list[Sphere | Plane]
+    objects: list[Sphere | Plane | Triangle]
     spheres: list[Sphere]
     lights: list[LightSource]
     planes: list[Plane]
+    vertices: list[Vertex]
+    triangles: list[Triangle]
     expose: float
     forward: np.ndarray
     up: np.ndarray
@@ -154,6 +220,8 @@ class State:
     def __init__(self):
         self.spheres = []
         self.planes = []
+        self.triangles = []
+        self.vertices = []
         self.objects = []
         self.lights = []
         self.color = np.array([1.0, 1.0, 1.0])
@@ -187,6 +255,19 @@ class State:
     def add_plane(self, p: Plane):
         self.planes.append(p)
         self.objects.append(p)
+
+    def add_triangle(self, t: Triangle):
+        self.triangles.append(t)
+        self.objects.append(t)
+
+    def add_vertex(self, v: Vertex):
+        self.vertices.append(v)
+
+    def get_vertex(self, idx: int):
+        if idx < 0:
+            return self.vertices[len(self.vertices) + idx]
+        
+        return self.vertices[idx - 1]
 
     def log_state(self):
         print('\n\n')

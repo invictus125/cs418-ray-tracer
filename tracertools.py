@@ -28,7 +28,7 @@ def trace(state: State):
                         minimum_pt = intersection['pt']
 
             if minimum_dist_obj:
-                _get_lighting_for_pixel(state, minimum_dist_obj, minimum_pt, x, y)
+                _get_lighting_for_pixel(state, minimum_dist_obj, minimum_pt, x, y, ray_for_pixel)
 
 
 def _transform_srgb(value: float):
@@ -77,10 +77,14 @@ def _get_color(color: np.ndarray, expose: float):
     return final_color
 
 
-def _get_lighting_for_pixel(state: State, hit_obj: Sphere | Plane, point: np.ndarray, x: int, y: int):
+def _get_lighting_for_pixel(state: State, hit_obj: Sphere | Plane, point: np.ndarray, x: int, y: int, ray: Ray):
     color = [0, 0, 0]
     normal = hit_obj.get_normal_at(point)
     normal = normal / np.linalg.norm(normal)
+
+    # If the normal and the ray are in the same direction, reverse the normal
+    if np.dot(ray.dir, normal) > 0:
+        normal = normal * -1
 
     for light in state.lights:
         light_location = light.get_location()
