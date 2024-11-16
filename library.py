@@ -1,6 +1,6 @@
 import re
 from PIL import Image
-from state import State, Sphere, LightSource
+from state import State, Sphere, LightSource, Plane
 import numpy as np
 
 
@@ -18,6 +18,7 @@ FORWARD_LINE = re.compile("^forward\s")
 UP_LINE = re.compile("^up\s")
 EYE_LINE = re.compile("^eye\s")
 BULB_LINE = re.compile("^bulb\s")
+PLANE_LINE = re.compile("^plane\s")
 
 
 ###########################
@@ -58,6 +59,8 @@ def get_handler(line: str):
         return handle_eye
     if BULB_LINE.match(line):
         return handle_bulb
+    if PLANE_LINE.match(line):
+        return handle_plane
     else:
         print(f'Unhandled command: {line}\n')
         return None
@@ -85,15 +88,9 @@ def handle_sphere(line: str, state: State):
     if len(parts) < 5:
         raise ValueError(f'Invalid sphere line: {line}\n')
     
-    new_sphere = Sphere()
-    new_sphere.x = float(parts[1])
-    new_sphere.y = float(parts[2])
-    new_sphere.z = float(parts[3])
-    new_sphere.r = float(parts[4])
+    new_sphere = Sphere(float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]), state.color)
 
-    new_sphere.set_color(state.color)
-
-    state.spheres.append(new_sphere)
+    state.add_sphere(new_sphere)
 
 
 def handle_sun(line: str, state: State):
@@ -149,3 +146,14 @@ def handle_bulb(line: str, state: State):
     new_bulb = LightSource(float(parts[1]), float(parts[2]), float(parts[3]), state.color, True)
 
     state.lights.append(new_bulb)
+
+
+def handle_plane(line: str, state: State):
+    parts = line.split()
+
+    if len(parts) < 5:
+        raise ValueError(f'Invalid sphere line: {line}\n')
+    
+    new_plane = Plane(float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]), state.color)
+
+    state.add_plane(new_plane)

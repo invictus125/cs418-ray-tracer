@@ -1,17 +1,6 @@
-from state import State, Sphere
+from state import State, Sphere, Plane, Ray
 import numpy as np
 from math import floor, e
-
-
-class Ray:
-    dir: list[float]
-    dir_mag: float
-    origin: list[float]
-
-    def __init__(self, origin, direction):
-        self.origin = np.array(origin)
-        self.dir = np.array(direction) / np.linalg.norm(direction)
-        self.dir_mag = 1.0
 
 
 def trace(state: State):
@@ -26,19 +15,20 @@ def trace(state: State):
                 state.up,
                 state.eye
             )
-            minimum_dist_sphere = None
+            minimum_dist_obj = None
             minimum_t = 0
             minimum_pt = None
-            for sphere in state.spheres:
-                intersection = _get_sphere_intersection(ray_for_pixel, sphere)
+
+            for obj in state.objects:
+                intersection = obj.get_intersection(ray_for_pixel)
                 if intersection:
-                    if not minimum_dist_sphere or intersection['t'] < minimum_t:
+                    if not minimum_dist_obj or intersection['t'] < minimum_t:
                         minimum_t = intersection['t']
-                        minimum_dist_sphere = sphere
+                        minimum_dist_obj = obj
                         minimum_pt = intersection['pt']
 
-            if minimum_dist_sphere:
-                _get_lighting_for_pixel(state, minimum_dist_sphere, minimum_pt, x, y)
+            if minimum_dist_obj:
+                _get_lighting_for_pixel(state, minimum_dist_obj, minimum_pt, x, y)
 
 
 def _transform_srgb(value: float):
@@ -48,7 +38,7 @@ def _transform_srgb(value: float):
         return 12.92 * value
 
 
-def _get_color(color: np.ndarray, expose: float, log: bool):
+def _get_color(color: np.ndarray, expose: float):
     r = color[0]
     g = color[1]
     b = color[2]
@@ -84,24 +74,13 @@ def _get_color(color: np.ndarray, expose: float, log: bool):
         255
     )
 
-    if log:
-        print(f'initial color: {color}')
-        print(f'final color: {final_color}')
-
     return final_color
 
 
-def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: int, y: int):
+def _get_lighting_for_pixel(state: State, hit_obj: Sphere | Plane, point: np.ndarray, x: int, y: int):
     color = [0, 0, 0]
-    normal = np.subtract(point, sphere.center)
+    normal = hit_obj.get_normal_at(point)
     normal = normal / np.linalg.norm(normal)
-
-    log = False
-    if x == 55 and y == 45:
-        log = True
-        print(f'intersection point: {point}')
-        print(f'normal: {normal}')
-
 
     for light in state.lights:
         light_location = light.get_location()
@@ -119,9 +98,9 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
         # Factor in occlusion
         occluded = False
         ray_to_light = Ray(point, light_direction)
-        
-        for s in state.spheres:
-            intersection = _get_sphere_intersection(ray_to_light, s)
+
+        for obj in state.objects:
+            intersection = obj.get_intersection(ray_to_light)
 
             if intersection:
                 if intersection['t'] < 1e-10:
@@ -143,23 +122,19 @@ def _get_lighting_for_pixel(state: State, sphere: Sphere, point: np.ndarray, x: 
             lambert = 0
 
         new_color = np.multiply(
-            sphere.color,
+            hit_obj.color,
             np.multiply(
                 light.color,
                 lambert
             )
         )
+
         color = np.add(
             color,
             new_color
         )
-        
-        if log:
-            print(f'lambert: {lambert}')
-            print(f'sun direction: {light_direction}')
-            print(f'linear color: {color}')
 
-    state.out_img.im.putpixel((x, y), _get_color(color, state.expose, log))
+    state.out_img.im.putpixel((x, y), _get_color(color, state.expose))
 
 
 def _get_s_for_pixel(x, y, h, w, max_hw):
@@ -172,34 +147,3 @@ def _get_ray_for_s(s_x, s_y, fwd_v, right_v, up_v, eye):
     dir = np.add(np.add(fwd_v, np.multiply(s_x, right_v)), np.multiply(s_y, up_v))
 
     return Ray(eye, dir)
-
-
-def _get_sphere_intersection(r: Ray, s: Sphere):
-    c = s.get_center()
-    diff = np.subtract(c, r.origin)
-    r_sqrd = s.r ** 2
-    inside = ((np.linalg.norm(diff) ** 2) < r_sqrd)
-
-    t_c = np.divide(np.dot(diff, r.dir), r.dir_mag)
-
-    if not inside and t_c < 0:
-        # No intersection
-        return None
-    
-    d_sqrd = np.linalg.norm(np.subtract(np.add(r.origin, np.multiply(t_c, r.dir)), c)) ** 2
-
-    if not inside and r_sqrd < d_sqrd:
-        # No intersection
-        return None
-    
-    t_offs = ((r_sqrd - d_sqrd) ** 0.5) / r.dir_mag
-
-    if inside:
-        t = t_c + t_offs
-    else:
-        t = t_c - t_offs
-
-    return {
-        't': t,
-        'pt': np.add(t * r.dir, r.origin)
-    }
